@@ -1,0 +1,25 @@
+{
+  "name": "redis-rememberme",
+  "description": "Redis remember me middleware for connect",
+  "version": "0.0.1",
+  "author": {
+    "name": "James Sharp",
+    "email": "james@ortootech.com"
+  },
+  "main": "./index.js",
+  "dependencies": { 
+      "redis": "0.7.x"
+    , "connect": "2.x"
+    , "debug": "*" 
+    , "cookie-signature": "*"
+    , "winston": "*"
+  },
+  "devDependencies": { 
+      "should": "*"
+    , "coffee-script": ">=1.1.1"
+    , "glob": "*"
+    , "wrench": "*"
+    , "sinon": "*"
+  },
+  "engines": { "node": "*" }
+}

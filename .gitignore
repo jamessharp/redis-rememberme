@@ -1,0 +1,8 @@
+/docs
+/node_modules
+/lib-cov
+
+.DS_Store
+*.sublime-workspace
+ortoo-test.log
+requests.log
