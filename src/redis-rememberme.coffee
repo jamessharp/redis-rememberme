@@ -16,6 +16,7 @@ connect = require 'connect'
 signature = require 'cookie-signature'
 winston = require 'winston'
 crypto = require 'crypto'
+{EventEmitter} = require 'events'
 
 Cookie = connect.session.Cookie
 
@@ -60,7 +61,7 @@ getRedisKeyVals = (data) ->
     }
 
 
-class RememberMe
+class RememberMe extends EventEmitter
 
     constructor: (opts) ->
 
@@ -73,7 +74,9 @@ class RememberMe
         # Kick off the scheduled cleanup of expired sessions
         @commenceCleanup()
 
-        return @middleware.bind this
+        mw = @middleware.bind this
+        mw.worker = this
+        return mw
 
     # Validate the cookie data. We do this by trying to find
     # the series/token combination for the provided user. If that exists then
@@ -171,8 +174,10 @@ class RememberMe
             unless valid
                 winston.verbose 'Invalid cookie', cookieData
                 # If there has been a security breach then invalidate all tokens for the
-                # use
-                if breach then @invalidateAll cookieData.userid
+                # use and mark that it has been probably stolen
+                if breach 
+                    @invalidateAll cookieData.userid
+                    req.rememberme.stolen = true
                 return next()
 
             # So the cookie is valid. Let the user in and record the remember me details. This will
@@ -235,13 +240,14 @@ class RememberMe
     commenceCleanup: ->
         # Run the cleanup every hour
         @cleanup()
-        @cleanupId = setInterval @cleanup.bind(this), 24*3600*1000 
+        @cleanupId = setInterval @cleanup.bind(this), 3600*1000 
 
     cancelCleanup: ->
         if @cleanupId then clearInterval @cleanupId
 
     # Find everything in the expires set that should expired by now
     cleanup: (callback) ->
+        @emit 'cleanup'
         {expiresKey} = getRedisKeyVals {}
         currentTime = Math.round(new Date().getTime() / 1000)
         multi = @client.multi()
@@ -251,14 +257,41 @@ class RememberMe
             if err
                 return callback(err) if callback else winston.error err.stack, err
 
+            # Remove the expired objects. This would leave empty sets hanging around though
+            # so we want to delete them too
             multi = @client.multi()
+            setsObj = {}
             for objVal in expiredObjs
                 expiredObj = JSON.parse objVal
                 for key, value of expiredObj
                     multi.srem(key, value)
-            multi.exec (err, replies) ->
+                    setsObj[key] = true
+
+            # This will be a list of all the sets we touch. Go and count their members
+            sets = []
+            for key, val of setsObj
+                multi.scard key
+                sets.push key
+
+            multi.exec (err, replies) =>
                 if err 
                     return callback(err) if callback else winston.error err.stack, err
+                    
+                # So the replies from the set count comes from the last batch of replies
+                start = replies.length - sets.length
+                _i = 0
+                multi = @client.multi()
+                for key in sets
+                    if replies[start + _i] is 0
+                        multi.del key
+                    _i++
+                multi.exec (err, replies) =>
+                    if err 
+                        return callback(err) if callback else winston.error err.stack, err
+
+                    @emit 'cleaned'
+                    callback() if callback
+                    return
 
 module.exports = RememberMe
         

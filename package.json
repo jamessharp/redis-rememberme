@@ -1,10 +1,14 @@
 {
   "name": "redis-rememberme",
   "description": "Redis remember me middleware for connect",
-  "version": "0.0.1",
+  "version": "0.1",
   "author": {
     "name": "James Sharp",
     "email": "james@ortootech.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jamessharp/redis-rememberme.git"
   },
   "main": "./index.js",
   "dependencies": { 
@@ -20,6 +24,9 @@
     , "glob": "*"
     , "wrench": "*"
     , "sinon": "*"
+    , "connect": "*"
+    , "connect-redis": "*"
   },
-  "engines": { "node": "*" }
+  "engines": { "node": "*" },
+  "readmeFilename": "Readme.md"
 }
