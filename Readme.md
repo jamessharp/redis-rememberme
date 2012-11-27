@@ -9,6 +9,7 @@ You will also need to have connect-redis installed and configured (this piggy ba
 
 ## Options
 Are almost the same as the connect session middleware with the added `redisStore`
+
     - `key` cookie name defaulting to connect.sid
     - `redisStore` connect-redis instance
     - `secret` session cookie is signed with this secret to prevent tampering
