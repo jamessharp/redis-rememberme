@@ -169,6 +169,7 @@ describe 'Remember me tests', ->
                 rememberMe req, res, ->
                     should.exist req.session.userid
                     req.session.userid.should.equal '1234'
+                    req.session.rememberme.should.be.true
                     res.end()
 
         it 'shouldn\'t set a cookie if there is already a user on the session', (done) ->

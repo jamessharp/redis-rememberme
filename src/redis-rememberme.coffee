@@ -181,8 +181,10 @@ class RememberMe extends EventEmitter
                 return next()
 
             # So the cookie is valid. Let the user in and record the remember me details. This will
-            # mean that we'll get a new cookie when the response is sent
+            # mean that we'll get a new cookie when the response is sent. Store that this session is 
+            # a remember me one for info if permissions depend on this
             req.session.userid = cookieData.userid
+            req.session.rememberme = true
             res.rememberme = res.rememberme or {}
             res.rememberme.userid = cookieData.userid
             res.rememberme.series = cookieData.series
