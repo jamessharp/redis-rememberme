@@ -30,6 +30,10 @@ decodeRememberMeCookie = (value, secret) ->
     # s:[signed bit of the format j:{json data}]
     unsignedCookie = connect.utils.parseSignedCookie value, secret
 
+    unless unsignedCookie
+        winston.warn 'Invalid remember me cookie signature', {value, unsignedCookie}
+        return null
+
     # Now we expect to be able to parse its JSON
     cookieData = connect.utils.parseJSONCookie unsignedCookie
 
@@ -150,7 +154,9 @@ class RememberMe extends EventEmitter
         unless cookieVal then return next()
 
         cookieData = decodeRememberMeCookie cookieVal, @opts.secret
-        unless cookieData then return next new Error 'Invalid cookie data'
+
+        # Don't want to error out if there is a cookie problem - we just don't accept it
+        unless cookieData then return next()
 
         # No need to actually validate it if we have a userid already (i.e. we're in a session)
         # but we do want to get this far so that we can destroy the cookie if the user logs out
@@ -166,7 +172,7 @@ class RememberMe extends EventEmitter
         @validateData cookieData, (err, valid, breach) =>
             # If there was an error then log it but move on
             if err
-                winston.error err
+                winston.error err.stack, err
                 return next()
 
             # Was the cookie valid? Could there have been a security breach?

@@ -1,7 +1,7 @@
 {
   "name": "redis-rememberme",
   "description": "Redis remember me middleware for connect",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": {
     "name": "James Sharp",
     "email": "james@ortootech.com"
